@@ -21,7 +21,7 @@ def predict_fire(data: FireFeatures):
         predicted_area = float(np.expm1(predicted_log_area)[0])  # Convert to native Python float
         
         # Classify based on the threshold
-        if predicted_area > 1:  # 1 hectares threshold
+        if predicted_area > 0.26:  # 0.26 hectares threshold
             return {"prediction": "Fire", "predicted_area": predicted_area}
         else:
             return {"prediction": "No Fire", "predicted_area": predicted_area}
