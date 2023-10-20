@@ -1,6 +1,6 @@
-fastapi
-uvicorn
-xgboost
-pandas
-scikit-learn
+fastapi == 0.103.2
+uvicorn == 0.23.2
+xgboost == 2.0.0
+pandas  == 2.1.1
+scikit-learn == 1.3.1
 
