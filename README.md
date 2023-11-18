@@ -23,7 +23,7 @@ This repository contains a machine learning model that predicts the area of fore
 
 2. **API Endpoint ([main.py](https://github.com/san0808/ForestFIre_XGBoost/blob/main/backend/main.py)):**
    - The trained model is loaded.
-   - An API endpoint `/predict/` is exposed which takes a list of features as input and returns the predicted area of the forest fire. If the predicted area is greater than 0.26 hectares, it classifies it as "Fire"; otherwise, "No Fire".
+   - An API endpoint `/predict/` is exposed, which takes `temp`, `RH`, `rain`, and `wind` as input, calculates additional features like FFMC, DMC, ISI, and DC, and returns the predicted area of the forest fire. If the predicted area is greater than 0.26 hectares, it classifies it as "Fire"; otherwise, "No Fire".
 
 ## Making Requests using FastAPI's Swagger UI
 
@@ -40,21 +40,18 @@ Open your browser and navigate to [http://127.0.0.1:8000/docs](http://127.0.0.1:
 ## Using the `/predict/` endpoint:
 - In the Swagger UI, locate the `/predict/` POST endpoint.
 - Click on the "Try it out" button.
-- In the "Request body" section, you'll see a field named `features`. This is where you'll input the data for prediction.
-- Enter the desired input values in the `features` field.
+- Provide input values for `temp`, `RH`, `rain`, and `wind`.
+- Click "Execute" to see the model's prediction.
 
 ## Sample Inputs
 
-### Sample for a potential fire scenario:
-Assume that this is during the month of August (peak of summer), on a Sunday, with relatively high temperature, low humidity, and strong winds:
-```
-[4, 5, 91.6, 145.4, 608.2, 10.7, 19.5, 70, 6.7, 0.0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
-```
-### Sample for a less likely fire scenario:
-Assume that this is during the month of December (winter), on a Wednesday, with low temperature, high humidity, and light winds:
-```
-[7, 4, 84.1, 27.8, 290.0, 5.3, 5.2, 95, 2.2, 0.0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-```
+### Sample for a Potential Fire Scenario:
+- Assume the following conditions: high temperature, low humidity, and strong winds.
+- Input: `{"temp": 30, "RH": 20, "rain": 0, "wind": 10}`
+
+### Sample for a Less Likely Fire Scenario:
+- Assume conditions typical of a wet and calm day.
+- Input: `{"temp": 15, "RH": 80, "rain": 5, "wind": 3}`
 
 These samples are based on logical assumptions and might not reflect real-world scenarios perfectly. However, they should provide a starting point for testing in the Swagger UI.
 
