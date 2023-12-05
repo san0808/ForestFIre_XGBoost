@@ -4,7 +4,23 @@ import pickle
 import numpy as np
 from datetime import datetime
 
+import uvicorn
+
 app = FastAPI()
+from fastapi.middleware.cors import CORSMiddleware
+
+# Add this before defining the app
+origins = [
+    "http://192.168.1.42",  
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Load the trained model
 with open('model/xgb_model.pkl', 'rb') as f:
@@ -126,4 +142,6 @@ def predict_fire(data: FireFeatures):
         raise HTTPException(status_code=400, detail=f"Model prediction failed: {str(e)}")
 
 
+if app == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
