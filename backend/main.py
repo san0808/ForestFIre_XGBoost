@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import pickle
 import numpy as np
 from datetime import datetime
+import requests
 
 import uvicorn
 
@@ -11,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Add this before defining the app
 origins = [
-    "http://192.168.1.42",  
+    "http://192.168.128.34",  
 ]
 
 app.add_middleware(
@@ -28,8 +29,6 @@ with open('model/xgb_model.pkl', 'rb') as f:
 
 # Define the input model
 class FireFeatures(BaseModel):
-    temp: float
-    RH: float
     rain: float
     wind: float
 
@@ -110,31 +109,43 @@ def get_one_hot_day_features(current_day):
     return [1 if i == current_day else 0 for i in range(1, 8)]
 
 
+def get_arduino_data():
+    try:
+        # Replace the URL with your Arduino server endpoint for getting data
+        response = requests.get("http://192.168.43.214/getData")
+        response.raise_for_status()  # Raise an exception for bad responses
+        humidity, temperature = map(float, response.text.split(','))
+        return humidity, temperature
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get data from Arduino server: {str(e)}")
+
+
 @app.post("/predict/")
 def predict_fire(data: FireFeatures):
     try:
+        RH, temp = get_arduino_data()
         current_month = datetime.now().month
         current_day = datetime.now().weekday() + 1  # Python weekdays start from 0 (Monday)
 
         # Calculate FWI components
-        FFMC = calculate_ffmc(data.temp, data.RH, data.rain, data.wind)
-        DMC = calculate_dmc(data.temp, data.RH, data.rain)
+        FFMC = calculate_ffmc(temp, RH, data.rain, data.wind)
+        DMC = calculate_dmc(temp, RH, data.rain)
         ISI = calculate_isi(data.wind, FFMC)
-        DC = calculate_dc(data.temp, data.rain)
+        DC = calculate_dc(temp, data.rain)
 
         # One-hot encoding for month and day
         month_features = get_one_hot_month_features(current_month)
         day_features = get_one_hot_day_features(current_day)
 
         # Form the complete feature array for prediction
-        features = [data.temp, data.RH, data.rain, data.wind, FFMC, DMC, ISI, DC] + month_features + day_features
+        features = [temp,RH, data.rain, data.wind, FFMC, DMC, ISI, DC] + month_features + day_features
 
         # Predict the burned area
         predicted_log_area = xgb_model.predict(np.array([features]))
         predicted_area = float(np.expm1(predicted_log_area)[0])
 
         # Classify based on the threshold
-        if predicted_area > 0.26:
+        if predicted_area > 3:
             return {"prediction": "Fire", "predicted_area": predicted_area}
         else:
             return {"prediction": "No Fire", "predicted_area": predicted_area}
